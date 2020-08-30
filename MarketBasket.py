@@ -23,15 +23,34 @@ def efficient_apriori_func():
     from efficient_apriori import apriori
     itemsets , rules = apriori(transaction,min_support=0.02,min_confidence=0.3)
     print('频繁项集:',itemsets)
+    print('频繁项集大小:',len(itemsets[1])+len(itemsets[2]))
     print('关联规则:',rules) 
+    print('关联规则大小:',len(rules)) 
 
+#导包，详细版mlxtend
 def mlxtend_appriori_func():
     from mlxtend.frequent_patterns import apriori
-    from mlxtend.frequent_patterns import association_rules
-    pd.options.display.max_columns=100
+    from mlxtend.frequent_patterns import association_rules   
+    from mlxtend.preprocessing import TransactionEncoder	
+    #pd.options.display.max_columns=100
+    # 定义模型，因为mlxtend的数据参数有特定模式，这里必须进行独热编码
+    te = TransactionEncoder()	
+    transaction_tf=te.fit_transform(transaction)
+    dfs = pd.DataFrame(transaction_tf,columns=te.columns_)
+    # print(dfs)
+    #利用apriori函数进行调用计算
+    itemsets = apriori(dfs,min_support=0.02,use_colnames=True)
+    #此处为了对比，不用lift进行计算，而用了和对比组相同的置信度进行计算，均为置信度=0.3
+    rules = association_rules(itemsets, metric="confidence", min_threshold=0.3)
+    print("频繁项集：", itemsets)
+    print("关联规则：", rules[ (rules['lift'] >= 1) & (rules['confidence'] >= 0.3) ])
+    # print("关联规则：",rules)
+    # print(rules['confidence'])
 
-# mlxtend_appriori_func()
+#调用函数，经过对比可得两种计算结果相同，频繁项集103个，关联规则20个，经仔细校验，20条关联规则完全相同
 efficient_apriori_func()
+mlxtend_appriori_func()
+
 
 
 
